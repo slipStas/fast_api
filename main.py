@@ -1,18 +1,31 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from contextlib import asynccontextmanager
+from database import create_tables, delete_tables
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await delete_tables()
+    print("database was drop!")
+    await create_tables()
+    print("create database!")
+    yield
+    print("shutdown...")
 
 
 class Task(BaseModel):
     name: str
     description: str | None
-    
 
-app = FastAPI()
 
-@app.get("/home")
-def get_home():
-    return {"id": 1,
-            "data": "home page"}
+app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/task")
+def get_tasks():
+    task = Task(name="video", description="make a short video for Tik-Tok")
+    return task
 #
 # def main():
 #     print("main function is now")
